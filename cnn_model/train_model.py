@@ -48,8 +48,8 @@ v4_orientation_std = 0.7
 
 # v1_gamma = v1_gammas[int(sys.argv[1]) - 1]
 # v4_orientation_std = v4_orientation_stds[int(sys.argv[1]) - 1]
-v1_weight_scale = v1_weight_scales[int(sys.argv[1]) - 1]
-v4_weight_scale = v4_weight_scales[int(sys.argv[1]) - 1]
+#v1_weight_scale = v1_weight_scales[int(sys.argv[1]) - 1]
+#v4_weight_scale = v4_weight_scales[int(sys.argv[1]) - 1]
 # phase_weight_scale = phase_weight_scales[int(sys.argv[1]) - 1]
 
 folder_savepath = 'trained_models/low_randomized_normalized_new_long/weight_scale_' + str(v1_weight_scale).replace('.', '') + "_" + str(phase_weight_scale).replace('.', '') + "_" + str(v4_weight_scale).replace('.', '') #path to existing directory for saving trained models
