@@ -2,3 +2,4 @@ trained_models/
 *.pt
 __pycache__/
 *.log
+.idea

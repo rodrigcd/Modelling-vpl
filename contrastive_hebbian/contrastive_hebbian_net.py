@@ -79,7 +79,8 @@ def d_W2(W1, W2, x, y, y_hat, gamma, eta, learning_rate):
 def generate_tuned_weights(input_dim, hidden_dim, angles, tuning_width=10, offset=0):
     W = np.zeros((hidden_dim, input_dim))
     for i in range(hidden_dim):
-        W[i, :] = periodic_kernel(angles, 180/hidden_dim*(i+offset), sigma=tuning_width, period=180)
+        mu = 180/hidden_dim*(i+offset) % 180
+        W[i, :] = periodic_kernel(angles, mu, sigma=tuning_width, period=180)
     return W
 
 
