@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import jax
 import jax.numpy as jnp
@@ -82,19 +81,3 @@ def generate_tuned_weights(input_dim, hidden_dim, angles, tuning_width=10, offse
         mu = 180/hidden_dim*(i+offset) % 180
         W[i, :] = periodic_kernel(angles, mu, sigma=tuning_width, period=180)
     return W
-
-
-if __name__ == "__main__":
-    key = jax.random.PRNGKey(0)
-    key, subkey = jax.random.split(key)
-    Nh = 25
-    input_dim = 10
-    output_dim = 5
-    gamma = 0.5
-    eta = -1
-    W1 = jax.random.normal(subkey, (Nh, input_dim))
-    W2 = jax.random.normal(subkey, (output_dim, Nh))
-    x = jax.random.normal(subkey, (input_dim, 1))
-    y = jax.random.normal(subkey, (output_dim, 1))
-    h_ff, y_hat = forward_path(W1, W2, x)
-    update = hebbian_update(W1, h_ff, x, eta)

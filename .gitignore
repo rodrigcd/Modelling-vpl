@@ -3,3 +3,5 @@ trained_models/
 __pycache__/
 *.log
 .idea
+local_results
+.ipynb_checkpoints

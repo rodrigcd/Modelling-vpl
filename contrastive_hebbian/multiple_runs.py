@@ -2,9 +2,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 import pickle
+import jax.numpy as jnp
 
 from contrastive_hebbian_net import ContrastiveNet, generate_tuned_weights
 from angle_discrimination_task import AngleDiscriminationTask
+
 
 def main(seed=0):
     np.random.seed(seed=seed)
@@ -16,12 +18,13 @@ def main(seed=0):
     signal_amp = 1.0
     signal_bandwidth = 15
     output_amp = 1.0
+    save_every = 10
 
     # Model parameters
     hidden_dim = 40
     learning_rate = 0.001
     test_epochs = 10
-    epochs = 50000
+    epochs = 20000
     tuned_neurons_width = 10
     lr_W2_W1 = 1.0
 
@@ -50,11 +53,18 @@ def main(seed=0):
         total_loss = []
         grad1_list = []
         grad2_list = []
+        W1_list = []
+        W2_list = []
 
         net = ContrastiveNet(W1_0=W1_0, W2_0=W2_0, gamma=values["gamma"], eta=values["eta"],
                              learning_rate=learning_rate,
                              lr_W2_W1=lr_W2_W1)
+
         for i in tqdm(range(epochs)):
+            if i % save_every == 0:
+                W1_list.append(net.W1)
+                W2_list.append(net.W2)
+
             x, y = data.full_batch()
             # print(x.shape, y.shape)
             h_ff, y_hat = net.forward(x)
@@ -63,13 +73,18 @@ def main(seed=0):
             grad1_list.append(W1_grad)
             grad2_list.append(W2_grad)
             total_loss.append(net.loss(y_hat, y))
+
         RSM = h_ff[:, :, 0] @ h_ff[:, :, 0].T
         aux_dict["RSM"] = RSM
         aux_dict["loss"] = total_loss
-        aux_dict["learned_W1"] = net.W1
-        aux_dict["learned_W2"] = net.W2
+        aux_dict["learned_W1"] = jnp.stack(W1_list)
+        aux_dict["learned_W2"] = jnp.stack(W2_list)
         aux_dict["W1_grad"] = grad1_list
         aux_dict["W2_grad"] = grad2_list
+        aux_dict["save_every"] = save_every
+        aux_dict["data"] = data
+        aux_dict["learning_rate"] = learning_rate
+        aux_dict["tuned_neurons_width"] = tuned_neurons_width
         regime_results[key] = aux_dict
     return regime_results
 
@@ -79,4 +94,4 @@ if __name__ == "__main__":
     save_path = "local_results/"
     for i in range(n_runs):
         results = main(seed=i)
-        pickle.dump(results, open(save_path + "run_" + str(i) + ".p", "wb"))
+        pickle.dump(results, open(save_path + "contrastive_run_" + str(i) + ".pkl", "wb"))
