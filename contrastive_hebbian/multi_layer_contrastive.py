@@ -8,7 +8,7 @@ from semantic_task import SemanticTask
 
 class MultiLayerContrastiveNet(object):
 
-    def __init__(self, W_list, gamma, eta, learning_rate):
+    def __init__(self, W_list, gamma, eta, learning_rate, weight_reg=1.0):
         self.input_dim = W_list[0].shape[1]
         self.output_dim = W_list[-1].shape[0]
         self.gamma = gamma
@@ -17,6 +17,7 @@ class MultiLayerContrastiveNet(object):
         self.learning_rate = learning_rate
         self.W_list = [jax.device_put(W) for W in W_list]
         self.sgd_func = grad(loss_func, argnums=2)
+        self.weight_reg = 1.0
 
     def forward(self, x):
         h_ff = forward_path(self.W_list, x, self.n_layers)
@@ -31,17 +32,23 @@ class MultiLayerContrastiveNet(object):
         sgd_updates = self.sgd_func(x, y, self.W_list, self.n_layers)
         cont_update = vmap(contrastive_update, in_axes=(None, 0, 0, None, None))(self.W_list[-1], y, y_hat, self.gamma,
                                                                                   self.learning_rate)
-
+        all_updates = []
         for i in range(self.n_layers):
             if i == self.n_layers - 1:
-                self.W_list[i] = self.W_list[i] + jnp.sum(cont_update, axis=0) - jnp.sum(sgd_updates[i], axis=0) * self.learning_rate
+                update = jnp.mean(cont_update, axis=0) - sgd_updates[i] * self.learning_rate
+                self.W_list[i] = self.W_list[i] + update
+                all_updates.append(np.array(update))
             else:
-                self.W_list[i] = self.W_list[i] + jnp.sum(hebbian_updates[i], axis=0) - jnp.sum(sgd_updates[i],
-                                                                                                 axis=0) *self.learning_rate
-        return loss
+                update = jnp.mean(hebbian_updates[i], axis=0) - sgd_updates[i] * self.learning_rate
+                self.W_list[i] = self.W_list[i] + update
+                all_updates.append(np.array(update))
+        return np.array(loss), all_updates
 
     def loss_func(self, y_hat, y):
-        return jnp.mean((y_hat - y)**2)
+        return jnp.mean((y_hat - y)**2)/2
+
+    def get_numpy_weights(self):
+        return [np.array(W) for W in self.W_list]
 
     def get_hebbian_updates(self, h_list, x):
         all_updates = []
@@ -54,29 +61,34 @@ class MultiLayerContrastiveNet(object):
         return all_updates
 
 
+#@jit
 def loss_func(x, y, W_list, n_layers):
     h = forward_path(W_list, x, n_layers)
     y_hat = h[-1]
     return jnp.mean((y_hat - y)**2)/2
 
 
+#@jit
 def forward_path(W_list, x, n_layers):
     h_list = []
     for i in range(n_layers):
-        x = W_list[i] @ x
+        if i == n_layers - 1:
+            x = W_list[i] @ x
+        else:
+            x = jnp.tanh(W_list[i] @ x)
         h_list.append(x)
     return h_list
 
 
-#@jit
+@jit
 def contrastive_update(W, y, y_hat, gamma, learning_rate):
     second_term = gamma * (y @ y.T - y_hat @ y_hat.T) @ W
     return second_term * learning_rate
 
 
-#@jit
+@jit
 def hebbian_update(W, h, h_1, eta):
-    eta_sign = (-1 * jax.nn.sigmoid(-eta*10) + 1) / 2
+    eta_sign = (-1 * jnp.sign(-eta) + 1) / 2#jax.nn.sigmoid(-eta*10) + 1) / 2
     eta_pos = eta * h * (h_1.T - h * W)
     eta_neg = eta * h * h_1.T / (1 + jnp.expand_dims(jnp.sum(W**2, axis=1), axis=-1))
     update = eta_sign * eta_pos + (1 - eta_sign) * eta_neg
@@ -89,7 +101,7 @@ if __name__ == "__main__":
     hierarchy_depth = 4
     learning_rate = 0.01
     batch_size = 2048
-    test_epochs = 10
+    test_epochs = 100
     epochs = 10
     run_test = True
 
@@ -119,6 +131,6 @@ if __name__ == "__main__":
                 x, y = data.full_batch()
                 #print(x.shape, y.shape)
                 #h = forward_path(net.W_list, x, net.n_layers)
-                loss = net.update(x, y)
-                print("debug")
+                loss, _ = net.update(x, y)
+                print("loss", loss)
             print(key, "works fine :)")

@@ -3,6 +3,7 @@ import numpy as np
 from tqdm import tqdm
 import pickle
 import jax.numpy as jnp
+import copy
 
 from contrastive_hebbian_net import ContrastiveNet, generate_tuned_weights
 from angle_discrimination_task import AngleDiscriminationTask
@@ -28,11 +29,17 @@ def main(seed=0):
     tuned_neurons_width = 10
     lr_W2_W1 = 1.0
 
-    all_regimes = {"contrastive_hebb": {"gamma": 1.0, "eta": 0.0},
-                   "gradient_descent": {"gamma": 0.0, "eta": 0.0},
+    curriculums = [20, 10, 5, 1]
+
+    all_regimes = {"gradient_descent": {"gamma": 0.0, "eta": 0.0},
+                   "contrastive": {"gamma": 1.0, "eta": 0.0},
                    "quasi_predictive": {"gamma": -1.0, "eta": 0.0},
                    "hebbian": {"gamma": 0, "eta": 0.01},
-                   "anti_hebbian": {"gamma": 0, "eta": -0.01}, }
+                   "anti_hebbian": {"gamma": 0, "eta": -0.01},
+                   "contrastive_hebb": {"gamma": 1.0, "eta": 0.005},
+                   "contrastive_anti_hebb": {"gamma": 1.0, "eta": -0.005},
+                   "quasi_predictive_hebb": {"gamma": -1.0, "eta": 0.005},
+                   "quasi_predictive_anti_hebb": {"gamma": -1.0, "eta": -0.005},}
 
     data = AngleDiscriminationTask(training_orientation=training_orientation,
                                    orientation_diff=orientation_diff,
@@ -60,27 +67,41 @@ def main(seed=0):
                              learning_rate=learning_rate,
                              lr_W2_W1=lr_W2_W1)
 
+        curr_index = 0
         for i in tqdm(range(epochs)):
+
+            if i % int(epochs/len(curriculums)) == 0 and i != 0:
+                curr_index += 1
+                data = AngleDiscriminationTask(training_orientation=training_orientation,
+                                               orientation_diff=curriculums[curr_index],
+                                               input_size=input_size,
+                                               signal_amp=signal_amp,
+                                               signal_bandwidth=signal_bandwidth,
+                                               output_amp=output_amp)
+
             if i % save_every == 0:
-                W1_list.append(net.W1)
-                W2_list.append(net.W2)
+                W1_list.append(copy.deepcopy(np.array(net.W1)))
+                W2_list.append(copy.deepcopy(np.array(net.W2)))
 
             x, y = data.full_batch()
             # print(x.shape, y.shape)
             h_ff, y_hat = net.forward(x)
             # print(h_ff.shape, y_hat.shape)
             W1_grad, W2_grad = net.update(x, y, y_hat, h_ff)
-            grad1_list.append(W1_grad)
-            grad2_list.append(W2_grad)
+
+            if i % save_every == 0:
+                grad1_list.append(W1_grad)
+                grad2_list.append(W2_grad)
+
             total_loss.append(net.loss(y_hat, y))
 
-        RSM = h_ff[:, :, 0] @ h_ff[:, :, 0].T
-        aux_dict["RSM"] = RSM
-        aux_dict["loss"] = total_loss
-        aux_dict["learned_W1"] = jnp.stack(W1_list)
-        aux_dict["learned_W2"] = jnp.stack(W2_list)
-        aux_dict["W1_grad"] = grad1_list
-        aux_dict["W2_grad"] = grad2_list
+        #RSM = h_ff[:, :, 0] @ h_ff[:, :, 0].T
+        #aux_dict["RSM"] = RSM
+        aux_dict["loss"] = np.array(total_loss)
+        aux_dict["learned_W1"] = np.array(jnp.stack(W1_list))
+        aux_dict["learned_W2"] = np.array(jnp.stack(W2_list))
+        aux_dict["W1_grad"] = np.array(grad1_list)
+        aux_dict["W2_grad"] = np.array(grad2_list)
         aux_dict["save_every"] = save_every
         aux_dict["data"] = data
         aux_dict["learning_rate"] = learning_rate
@@ -90,8 +111,9 @@ def main(seed=0):
 
 
 if __name__ == "__main__":
-    n_runs = 10
-    save_path = "local_results/"
+    n_runs = 5
+    save_path = "long_curriculum/"
     for i in range(n_runs):
+        print("seed", i)
         results = main(seed=i)
         pickle.dump(results, open(save_path + "contrastive_run_" + str(i) + ".pkl", "wb"))

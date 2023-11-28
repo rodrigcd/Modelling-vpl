@@ -14,7 +14,7 @@ class AngleDiscriminationTask(BaseTask):
         self.signal_amp = signal_amp
         self.signal_bandwidth = signal_bandwidth
         self.output_amp = output_amp
-        self.output_size = 1.0
+        self.output_size = 1
         self._generate_input()
 
     def _generate_input(self):

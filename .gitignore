@@ -5,3 +5,7 @@ __pycache__/
 .idea
 local_results
 .ipynb_checkpoints
+curriculum_results
+local_multilayer
+long_local
+long_curriculum
