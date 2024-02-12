@@ -5,8 +5,9 @@ import pickle
 import jax.numpy as jnp
 import copy
 
-from contrastive_hebbian_net import ContrastiveNet, generate_tuned_weights
-from angle_discrimination_task import AngleDiscriminationTask
+from vpl_model.networks import ContrastiveNet
+from vpl_model.utils import generate_tuned_weights
+from vpl_model.tasks import AngleDiscriminationTask
 
 
 def main(seed=0):
@@ -30,6 +31,7 @@ def main(seed=0):
     lr_W2_W1 = 1.0
 
     curriculums = [20, 10, 5, 1]
+
 
     all_regimes = {"gradient_descent": {"gamma": 0.0, "eta": 0.0},
                    "contrastive": {"gamma": 1.0, "eta": 0.0},
@@ -70,23 +72,22 @@ def main(seed=0):
         curr_index = 0
         for i in tqdm(range(epochs)):
 
-            if i % int(epochs/len(curriculums)) == 0 and i != 0:
-                curr_index += 1
+            if i % int(epochs/len(curriculums)) == 0:
                 data = AngleDiscriminationTask(training_orientation=training_orientation,
                                                orientation_diff=curriculums[curr_index],
                                                input_size=input_size,
                                                signal_amp=signal_amp,
                                                signal_bandwidth=signal_bandwidth,
                                                output_amp=output_amp)
+                print("iteration", i, "new curriculum", curriculums[curr_index])
+                curr_index += 1
 
             if i % save_every == 0:
                 W1_list.append(copy.deepcopy(np.array(net.W1)))
                 W2_list.append(copy.deepcopy(np.array(net.W2)))
 
             x, y = data.full_batch()
-            # print(x.shape, y.shape)
             h_ff, y_hat = net.forward(x)
-            # print(h_ff.shape, y_hat.shape)
             W1_grad, W2_grad = net.update(x, y, y_hat, h_ff)
 
             if i % save_every == 0:
@@ -95,8 +96,6 @@ def main(seed=0):
 
             total_loss.append(net.loss(y_hat, y))
 
-        #RSM = h_ff[:, :, 0] @ h_ff[:, :, 0].T
-        #aux_dict["RSM"] = RSM
         aux_dict["loss"] = np.array(total_loss)
         aux_dict["learned_W1"] = np.array(jnp.stack(W1_list))
         aux_dict["learned_W2"] = np.array(jnp.stack(W2_list))
@@ -112,7 +111,7 @@ def main(seed=0):
 
 if __name__ == "__main__":
     n_runs = 5
-    save_path = "long_curriculum/"
+    save_path = "correct_curriculum/"
     for i in range(n_runs):
         print("seed", i)
         results = main(seed=i)

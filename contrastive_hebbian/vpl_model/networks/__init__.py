@@ -1,0 +1,2 @@
+from .contrastive_hebbian_net import ContrastiveNet
+from .multi_layer_contrastive import MultiLayerContrastiveNet

@@ -2,8 +2,8 @@ import numpy as np
 import jax
 import jax.numpy as jnp
 from jax import grad, jit, vmap
-from angle_discrimination_task import gaussian_func, periodic_kernel
-from semantic_task import SemanticTask
+from vpl_model.utils import periodic_kernel
+from vpl_model.tasks import SemanticTask
 
 
 class MultiLayerContrastiveNet(object):

@@ -9,3 +9,5 @@ curriculum_results
 local_multilayer
 long_local
 long_curriculum
+all_results
+*.egg-info

@@ -1,6 +1,6 @@
-from semantic_task import BaseTask
-from scipy.stats import norm
 import numpy as np
+from vpl_model.utils import gaussian_func
+from vpl_model.tasks import BaseTask
 
 
 class AngleDiscriminationTask(BaseTask):
@@ -28,18 +28,6 @@ class AngleDiscriminationTask(BaseTask):
         y = np.array([self.output_amp, -self.output_amp])[..., np.newaxis, np.newaxis]
         x = np.stack([self.pos_gaussian, self.neg_gaussian], axis=0)[..., np.newaxis]
         return x, y
-
-
-def gaussian_func(x, mu, sigma):
-    pdf = norm.pdf(x, mu, sigma)
-    return pdf/np.max(pdf)
-
-
-def periodic_kernel(x, mu, sigma=1.0, period=1.0):
-    distance = np.stack([np.abs(x - mu), np.abs(x - (mu + period)), np.abs(x - (mu - period))])
-    distance = np.min(distance, axis=0)
-    kernel = np.exp(-distance**2/(2*sigma**2))
-    return kernel/np.max(kernel)
 
 
 if __name__ == "__main__":

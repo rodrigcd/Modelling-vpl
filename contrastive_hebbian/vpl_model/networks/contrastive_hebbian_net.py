@@ -2,7 +2,7 @@ import numpy as np
 import jax
 import jax.numpy as jnp
 from jax import grad, jit, vmap
-from angle_discrimination_task import gaussian_func, periodic_kernel
+from vpl_model.utils import periodic_kernel
 
 
 class ContrastiveNet(object):
@@ -73,11 +73,3 @@ def d_W1(W1, W2, x, y, h_ff, y_hat, gamma, eta, learning_rate):
 def d_W2(W1, W2, x, y, y_hat, gamma, eta, learning_rate):
     W2_contrastive = contrastive_W2_update(W1, W2, x, y, y_hat, gamma, learning_rate)
     return W2_contrastive
-
-
-def generate_tuned_weights(input_dim, hidden_dim, angles, tuning_width=10, offset=0):
-    W = np.zeros((hidden_dim, input_dim))
-    for i in range(hidden_dim):
-        mu = 180/hidden_dim*(i+offset) % 180
-        W[i, :] = periodic_kernel(angles, mu, sigma=tuning_width, period=180)
-    return W
