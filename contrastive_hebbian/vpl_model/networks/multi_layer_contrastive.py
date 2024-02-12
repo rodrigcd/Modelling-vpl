@@ -2,7 +2,6 @@ import numpy as np
 import jax
 import jax.numpy as jnp
 from jax import grad, jit, vmap
-from vpl_model.utils import periodic_kernel
 from vpl_model.tasks import SemanticTask
 
 
@@ -109,7 +108,7 @@ if __name__ == "__main__":
                    "gradient_descent": {"gamma": 0.0, "eta": 0.0},
                    "quasi_predictive": {"gamma": -1.0, "eta": 0.0},
                    "hebbian": {"gamma": 0, "eta": 1.0},
-                   "anti_hebbian": {"gamma": 0, "eta": -1.0}, }
+                   "anti_hebbian": {"gamma": 0, "eta": -1.0},}
 
     data = SemanticTask(batch_size=batch_size, h_levels=hierarchy_depth)
 

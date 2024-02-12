@@ -34,26 +34,31 @@ class ContrastiveNet(object):
     def loss(self, y_hat, y):
         return jnp.mean((y_hat - y)**2)
 
+
 @jit
 def forward_path(W1, W2, x):
     h_ff = W1 @ x
     y_hat = W2 @ h_ff
     return h_ff, y_hat
 
+
 @jit
 def feedback_path(W1, W2, x, y, gamma):
     h = W1 @ x + gamma * W2.T @ y
     return h
 
+
 @jit
 def contrastive_W1_update(W2, y, y_hat, x, learning_rate):
     return (W2.T @ (y - y_hat) @ x.T) * learning_rate
+
 
 @jit
 def contrastive_W2_update(W1, W2, x, y, y_hat, gamma, learning_rate):
     first_term = (y - y_hat) @ x.T @ W1.T
     second_term = gamma * (y @ y.T - y_hat @ y_hat.T) @ W2
     return (first_term + second_term) * learning_rate
+
 
 @jit
 def hebbian_update(W1, h, x, eta):
@@ -63,11 +68,13 @@ def hebbian_update(W1, h, x, eta):
     update = eta_sign * eta_pos + (1 - eta_sign) * eta_neg
     return update
 
+
 @jit
 def d_W1(W1, W2, x, y, h_ff, y_hat, gamma, eta, learning_rate):
     W1_hebbian = hebbian_update(W1, h_ff, x, eta)
     W1_contrastive = contrastive_W1_update(W2, y, y_hat, x, learning_rate)
     return W1_hebbian + W1_contrastive
+
 
 @jit
 def d_W2(W1, W2, x, y, y_hat, gamma, eta, learning_rate):
