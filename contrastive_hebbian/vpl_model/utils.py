@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.stats import norm
+import os
 
 
 def gaussian_func(x, mu, sigma):
@@ -20,3 +21,7 @@ def generate_tuned_weights(input_dim, hidden_dim, angles, tuning_width=10, offse
         mu = 180/hidden_dim*(i+offset) % 180
         W[i, :] = periodic_kernel(angles, mu, sigma=tuning_width, period=180)
     return W
+
+def check_dir(path):
+    if not os.path.isdir(path):
+        os.makedirs(path)

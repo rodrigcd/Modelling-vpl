@@ -6,32 +6,29 @@ import jax.numpy as jnp
 import copy
 
 from vpl_model.networks import ContrastiveNet
-from vpl_model.utils import generate_tuned_weights
+from vpl_model.utils import generate_tuned_weights, check_dir
 from vpl_model.tasks import AngleDiscriminationTask
 
 
 def main(seed=0):
     np.random.seed(seed=seed)
 
-    # Task parameters
-    training_orientation = 90.0
-    orientation_diff = 1
-    input_size = 80
-    signal_amp = 1.0
-    signal_bandwidth = 15
-    output_amp = 1.0
-    save_every = 10
-
-    # Model parameters
-    hidden_dim = 40
-    learning_rate = 0.001
-    test_epochs = 10
-    epochs = 20000
-    tuned_neurons_width = 10
-    lr_W2_W1 = 1.0
-
-    curriculums = [20, 10, 5, 1]
-
+    params = {"seed": seed,
+              "training_orientation": 90.0,
+              "orientation_diff": 1,
+              "input_size": 80,
+              "signal_amp": 1.0,
+              "signal_bandwidth": 15,
+              "output_amp": 1.0,
+              "save_every": 10,
+              "hidden_dim": 40,
+              "learning_rate": 0.001,
+              "test_iters": 10,
+              "train_iters": 1000,
+              "tuned_neurons_width": 10,
+              "lr_W2_W1": 1.0,
+              "curriculums": [20, 10, 5, 1]  # orientation_diff per training stage
+              }
 
     all_regimes = {"gradient_descent": {"gamma": 0.0, "eta": 0.0},
                    "contrastive": {"gamma": 1.0, "eta": 0.0},
@@ -43,18 +40,21 @@ def main(seed=0):
                    "quasi_predictive_hebb": {"gamma": -1.0, "eta": 0.005},
                    "quasi_predictive_anti_hebb": {"gamma": -1.0, "eta": -0.005},}
 
-    data = AngleDiscriminationTask(training_orientation=training_orientation,
-                                   orientation_diff=orientation_diff,
-                                   input_size=input_size,
-                                   signal_amp=signal_amp,
-                                   signal_bandwidth=signal_bandwidth,
-                                   output_amp=output_amp)
+    data = AngleDiscriminationTask(training_orientation=params["training_orientation"],
+                                   orientation_diff=params["curriculums"][0],
+                                   input_size=params["input_size"],
+                                   signal_amp=params["signal_amp"],
+                                   signal_bandwidth=params["signal_bandwidth"],
+                                   output_amp=params["output_amp"])
 
     offset = np.random.normal()
-    W1_0 = generate_tuned_weights(input_size, hidden_dim=hidden_dim, angles=data.angles,
-                                  tuning_width=tuned_neurons_width,
+    W1_0 = generate_tuned_weights(params["input_size"],
+                                  hidden_dim=params["hidden_dim"],
+                                  angles=data.angles,
+                                  tuning_width=params["tuned_neurons_width"],
                                   offset=offset)
-    W2_0 = np.zeros((int(data.output_size), hidden_dim))
+
+    W2_0 = np.zeros((int(data.output_size), int(params["hidden_dim"])))
 
     regime_results = {}
     for key, values in all_regimes.items():
@@ -66,23 +66,23 @@ def main(seed=0):
         W2_list = []
 
         net = ContrastiveNet(W1_0=W1_0, W2_0=W2_0, gamma=values["gamma"], eta=values["eta"],
-                             learning_rate=learning_rate,
-                             lr_W2_W1=lr_W2_W1)
+                             learning_rate=params["learning_rate"],
+                             lr_W2_W1=params["lr_W2_W1"])
 
         curr_index = 0
-        for i in tqdm(range(epochs)):
+        for i in tqdm(range(params["train_iters"])):
 
-            if i % int(epochs/len(curriculums)) == 0:
-                data = AngleDiscriminationTask(training_orientation=training_orientation,
-                                               orientation_diff=curriculums[curr_index],
-                                               input_size=input_size,
-                                               signal_amp=signal_amp,
-                                               signal_bandwidth=signal_bandwidth,
-                                               output_amp=output_amp)
-                print("iteration", i, "new curriculum", curriculums[curr_index])
+            if i % int(params["train_iters"]/len(params["curriculums"])) == 0:
+                data = AngleDiscriminationTask(training_orientation=params["training_orientation"],
+                                               orientation_diff=params["curriculums"][curr_index],
+                                               input_size=params["input_size"],
+                                               signal_amp=params["signal_amp"],
+                                               signal_bandwidth=params["signal_bandwidth"],
+                                               output_amp=params["output_amp"])
+                print("iteration", i, "new curriculum", params["curriculums"][curr_index])
                 curr_index += 1
 
-            if i % save_every == 0:
+            if i % params["save_every"] == 0:
                 W1_list.append(copy.deepcopy(np.array(net.W1)))
                 W2_list.append(copy.deepcopy(np.array(net.W2)))
 
@@ -90,7 +90,7 @@ def main(seed=0):
             h_ff, y_hat = net.forward(x)
             W1_grad, W2_grad = net.update(x, y, y_hat, h_ff)
 
-            if i % save_every == 0:
+            if i % params["save_every"] == 0:
                 grad1_list.append(W1_grad)
                 grad2_list.append(W2_grad)
 
@@ -101,18 +101,20 @@ def main(seed=0):
         aux_dict["learned_W2"] = np.array(jnp.stack(W2_list))
         aux_dict["W1_grad"] = np.array(grad1_list)
         aux_dict["W2_grad"] = np.array(grad2_list)
-        aux_dict["save_every"] = save_every
+        aux_dict["save_every"] = params["save_every"]
         aux_dict["data"] = data
-        aux_dict["learning_rate"] = learning_rate
-        aux_dict["tuned_neurons_width"] = tuned_neurons_width
+        aux_dict["learning_rate"] = params["learning_rate"]
+        aux_dict["tuned_neurons_width"] = params["tuned_neurons_width"]
         regime_results[key] = aux_dict
-    return regime_results
+    return regime_results, params
 
 
 if __name__ == "__main__":
     n_runs = 5
-    save_path = "correct_curriculum/"
+    save_path = "../all_results/correct_curriculum/"
+    check_dir(save_path)
     for i in range(n_runs):
         print("seed", i)
-        results = main(seed=i)
+        results, params = main(seed=i)
         pickle.dump(results, open(save_path + "contrastive_run_" + str(i) + ".pkl", "wb"))
+        pickle.dump(params, open(save_path + "params_" + str(i) + ".pkl", "wb"))
