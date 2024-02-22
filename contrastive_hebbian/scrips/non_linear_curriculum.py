@@ -22,9 +22,9 @@ def main(seed=0):
               "output_amp": 1.0,
               "save_every": 10,
               "hidden_dim": 40,
-              "learning_rate": 0.01,
+              "learning_rate": 0.001,
               "test_iters": 10,
-              "train_iters": 1000,
+              "train_iters": 10000,
               "tuned_neurons_width": 10,
               "lr_W2_W1": 1.0,
               "curriculums": [20, 10, 5, 1]  # orientation_diff per training stage
@@ -108,8 +108,8 @@ def main(seed=0):
 
 
 if __name__ == "__main__":
-    n_runs = 5
-    save_path = "../all_results/non_linear/"
+    n_runs = 3
+    save_path = "../all_results/non_linear_tanh_50000/"
     check_dir(save_path)
     for i in range(n_runs):
         print("seed", i)

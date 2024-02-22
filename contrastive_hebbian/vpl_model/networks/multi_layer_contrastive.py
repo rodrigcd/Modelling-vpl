@@ -7,7 +7,7 @@ from vpl_model.tasks import SemanticTask
 
 class MultiLayerContrastiveNet(object):
 
-    def __init__(self, W_list, gamma, eta, learning_rate, weight_reg=1.0):
+    def __init__(self, W_list, gamma, eta, learning_rate, weight_reg=1.0, normalize_weights=False):
         self.input_dim = W_list[0].shape[1]
         self.output_dim = W_list[-1].shape[0]
         self.gamma = gamma
@@ -15,8 +15,11 @@ class MultiLayerContrastiveNet(object):
         self.n_layers = len(W_list)
         self.learning_rate = learning_rate
         self.W_list = [jax.device_put(W) for W in W_list]
-        self.sgd_func = grad(loss_func, argnums=2)
+        self.sgd_func = grad(mse_loss, argnums=2)
         self.weight_reg = 1.0
+        self.normalize_weights = normalize_weights
+        if self.normalize_weights:
+            self.normalize_activity_weights()
 
     def forward(self, x):
         h_ff = forward_path(self.W_list, x, self.n_layers)
@@ -43,7 +46,7 @@ class MultiLayerContrastiveNet(object):
                 all_updates.append(np.array(update))
         return np.array(loss), all_updates
 
-    def loss_func(self, y_hat, y):
+    def mse_loss(self, y_hat, y):
         return jnp.mean((y_hat - y)**2)/2
 
     def get_numpy_weights(self):
@@ -59,12 +62,29 @@ class MultiLayerContrastiveNet(object):
             h_1 = h
         return all_updates
 
+    def get_tunning_curves(self):
+        probing_angles = jnp.eye(self.input_dim)
+        activity_per_layer = forward_path(self.W_list, probing_angles, self.n_layers)
+        return activity_per_layer
+
+    def normalize_activity_weights(self):
+        for i, W in enumerate(self.W_list):
+            activity_per_layer = self.get_tunning_curves()
+            normalized_weights = W/np.amax(activity_per_layer[i], axis=1)[:, np.newaxis]
+            self.W_list[i] = normalized_weights
+
 
 #@jit
-def loss_func(x, y, W_list, n_layers):
+def mse_loss(x, y, W_list, n_layers):
     h = forward_path(W_list, x, n_layers)
     y_hat = h[-1]
     return jnp.mean((y_hat - y)**2)/2
+
+
+def cross_entropy_loss(x, y, W_list, n_layers):
+    h = forward_path(W_list, x, n_layers)
+    y_hat = h[-1]
+    return -jnp.mean(y * jnp.log(y_hat) + (1 - y) * jnp.log(1 - y_hat))
 
 
 #@jit
@@ -74,7 +94,7 @@ def forward_path(W_list, x, n_layers):
         if i == n_layers - 1:
             x = W_list[i] @ x
         else:
-            x = jnp.tanh(W_list[i] @ x)
+            x = jax.nn.relu(W_list[i] @ x)  #jnp.tanh(W_list[i] @ x)  #jax.nn.sigmoid(W_list[i] @ x)
         h_list.append(x)
     return h_list
 

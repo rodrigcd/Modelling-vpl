@@ -1,2 +1,4 @@
 from .contrastive_hebbian_net import ContrastiveNet
 from .multi_layer_contrastive import MultiLayerContrastiveNet
+from .forward_paths import forward_path, sigmoid_output_forward_path
+from .flexible_lr_net import FlexibleLearningRuleNet

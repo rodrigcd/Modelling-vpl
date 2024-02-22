@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.stats import norm
 import os
+import jax.numpy as jnp
 
 
 def gaussian_func(x, mu, sigma):
@@ -22,6 +23,23 @@ def generate_tuned_weights(input_dim, hidden_dim, angles, tuning_width=10, offse
         W[i, :] = periodic_kernel(angles, mu, sigma=tuning_width, period=180)
     return W
 
+
 def check_dir(path):
     if not os.path.isdir(path):
         os.makedirs(path)
+
+
+def infer_periodic_gaussian_params(x, p):
+    """
+    Infer the gaussian parameters from an array representing probability distribution
+    :param x: variable space
+    :param y: probability
+    :return: mean and standard deviation of the inferred gaussian
+    """
+    cos_x, sin_x = jnp.cos(jnp.deg2rad(x)*2), jnp.sin(jnp.deg2rad(x)*2)
+    total_vector = jnp.array([jnp.sum(p * cos_x), jnp.sum(p * sin_x)])
+    mu = jnp.rad2deg(np.arctan2(total_vector[1], total_vector[0]))/2
+    distance = jnp.stack([jnp.abs(x - mu), jnp.abs(x - (mu + 180)), jnp.abs(x - (mu - 180))])
+    distance = jnp.min(distance, axis=0)
+    sigma = jnp.sqrt(jnp.sum(p * distance**2)/jnp.sum(p))
+    return mu, sigma
