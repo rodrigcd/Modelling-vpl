@@ -6,6 +6,7 @@ from vpl_model.tasks import SemanticTask
 from .forward_paths import sigmoid_output_forward_path
 from vpl_model.learning import (grad_cross_entropy, feedback_alignment_cross_entropy,
                                 predictive_coding_cross_entropy, hebbian_update, cross_entropy_loss)
+from vpl_model.utils import probe_tuning_curve
 
 
 class FlexibleLearningRuleNet(object):
@@ -94,7 +95,7 @@ class FlexibleLearningRuleNet(object):
 
     def get_tuning_curves(self):
         probing_angles = jnp.eye(self.input_dim)
-        activity_per_layer, z = sigmoid_output_forward_path(self.W_list, probing_angles, self.n_layers)
+        activity_per_layer, z = probe_tuning_curve(self.W_list, probing_angles, sigmoid_output_forward_path)
         return activity_per_layer
 
     def normalize_activity_weights(self):
