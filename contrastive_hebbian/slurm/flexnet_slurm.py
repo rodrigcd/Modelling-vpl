@@ -39,5 +39,5 @@ if __name__ == "__main__":
     print("#####")
 
     results, params = main(model_id=key, seed=seed)
-    pickle.dump(results, open(save_path + args["exp_name"] + "_run_" + str(run) + ".pkl", "wb"))
-    pickle.dump(params, open(save_path + args["exp_name"] + "_params_run_" + str(run) + ".pkl", "wb"))
+    pickle.dump(results, open(save_path + key + "_run_" + str(seed) + ".pkl", "wb"))
+    pickle.dump(params, open(save_path + key + "_params_run_" + str(seed) + ".pkl", "wb"))
