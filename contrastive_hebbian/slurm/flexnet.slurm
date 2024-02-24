@@ -1,17 +1,18 @@
 #!/bin/bash
 #
-#SBATCH --job-name=shifted
-#SBATCH -p cpu # partition (queue)
+#SBATCH --job-name=flex
+##SBATCH -p cpu # partition (queue)
 #SBATCH -N 1   # number of nodes
 #SBATCH -n 1   # number of cores
 ##SBATCH -w gpu-380-18
-#SBATCH --output=ensemble.log
-#SBATCH --error=ensemble.error
-##SBATCH -p gpu
+#SBATCH --output=flex.log
+#SBATCH --error=flex.error
+#SBATCH -p gpu
 #SBATCH --mem=6G
-#SBATCH --time=0-72:00
-##SBATCH --gres=gpu:1  # this is important to use GPUs
+#SBATCH --time=12:00:00
+#SBATCH --gres=gpu:1  # this is important to use GPUs
 #SBATCH --array=0-44
+#SBATCH --partition=medium
 
 source /usr/share/modules/init/bash
 module load cuda/11.6
