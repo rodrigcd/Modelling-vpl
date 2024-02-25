@@ -21,7 +21,7 @@ def generate_tuned_weights(input_dim, hidden_dim, angles, tuning_width=10, offse
     for i in range(hidden_dim):
         mu = 180/hidden_dim*(i+offset) % 180
         W[i, :] = periodic_kernel(angles, mu, sigma=tuning_width, period=180)
-    return W
+    return W, mu, tuning_width
 
 
 def check_dir(path):

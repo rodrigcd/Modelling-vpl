@@ -7,11 +7,38 @@ import copy
 from vpl_model.networks import FlexibleLearningRuleNet
 from vpl_model.utils import generate_tuned_weights, check_dir
 from vpl_model.tasks import AngleDiscriminationTask
+from vpl_model.neural_data import DataHandler
+
 
 hebbian_eta = 0.005
 sgd_lr = 0.01
 feedback_alignment_lr = 0.01
 predictive_coding_lr = 0.2
+FWHM = 35.0
+
+params = {"training_orientation": 90.0,
+          "orientation_diff": 8,
+          "input_size": 180,
+          "signal_amp": 1.0,
+          "signal_bandwidth": 10,
+          "output_amp": 1.0,
+          "save_every": 10,
+          "hidden_dim1": 120,
+          "hidden_dim2": 120,
+          "pc_inner_loops": 10,
+          "test_iters": 5000,
+          "train_iters": 5000,
+          "tuned_neurons_width": FWHM / 2.35482,
+          "un_tuned_neurons_width": 1.0,
+          "PC_activity_learning": 0.1,
+          "lr_W2_W1": 1.0,
+          "normalize_weights": True,
+          "output_size": 1,
+          "curriculums": [8, 5, 3, 2, 1],  # orientation_diff per training stage
+          "target_accuracy": 0.75,
+          "minimum_steps_per_stage": 100,
+          "df_path": "/nfs/nhome/live/rcdavis/perception_task/tmp_data/20240225031102_orituneData.pkl",
+          }
 
 all_regimes = {
     "gradient_descent": {"sgd_lr": sgd_lr, "eta": 0.0,
@@ -46,31 +73,7 @@ all_regimes = {
 
 def main(model_id, seed=0):
     np.random.seed(seed=seed)
-
-    params = {"seed": seed,
-              "training_orientation": 90.0,
-              "orientation_diff": 1,
-              "input_size": 60,
-              "signal_amp": 1.0,
-              "signal_bandwidth": 15,
-              "output_amp": 1.0,
-              "save_every": 10,
-              "hidden_dim1": 30,
-              "hidden_dim2": 30,
-              "pc_inner_loops": 10,
-              "test_iters": 3000,
-              "train_iters": 3000,
-              "tuned_neurons_width": 7.5,
-              "un_tuned_neurons_width": 1.0,
-              "PC_activity_learning": 0.1,
-              "lr_W2_W1": 1.0,
-              "normalize_weights": True,
-              "output_size": 1,
-              "curriculums": [8, 5, 3, 1],  # orientation_diff per training stage
-              "target_accuracy": 0.75,
-              "minimum_steps_per_stage": 50,
-              }
-
+    params["seed"] = seed
     data = AngleDiscriminationTask(training_orientation=params["training_orientation"],
                                    orientation_diff=params["curriculums"][0],
                                    input_size=params["input_size"],
@@ -79,12 +82,18 @@ def main(model_id, seed=0):
                                    output_amp=params["output_amp"],
                                    single_output=True)
 
+    data_handler = DataHandler(params["df_path"])
+
     offset = np.random.normal()
-    W1_0 = generate_tuned_weights(params["input_size"],
-                                  hidden_dim=params["hidden_dim1"],
-                                  angles=data.angles,
-                                  tuning_width=params["tuned_neurons_width"],
-                                  offset=offset)
+    W1_0, sampled_ori, sampled_bandwidths = data_handler.angle_bandwidth_generated_weights(params["input_size"],
+                                                                                           params["hidden_dim1"],
+                                                                                           data.angles)
+    # W1_0 = generate_tuned_weights(params["input_size"],
+    #                               hidden_dim=params["hidden_dim1"],
+    #                               angles=data.angles,
+    #                               tuning_width=params["tuned_neurons_width"],
+    #                               offset=offset)
+
     h_angles = np.linspace(0, 180, num=params["hidden_dim1"])
     W2_0 = generate_tuned_weights(params["hidden_dim1"],
                                   hidden_dim=params["hidden_dim2"],
