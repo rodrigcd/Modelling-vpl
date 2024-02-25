@@ -13,7 +13,7 @@ if __name__ == "__main__":
         '--run-id', type=int, default=0
     )
     parser.add_argument(
-        '--save-path', type=str, default="../all_results/flexnet_slurm/"
+        '--save-path', type=str, default="../all_results/neural_data_net_slurm/"
     )
     parser.add_argument(
         '--exp-name', type=str, default="flexnet"
