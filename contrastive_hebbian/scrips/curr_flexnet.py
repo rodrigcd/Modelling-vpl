@@ -95,11 +95,11 @@ def main(model_id, seed=0):
     #                               offset=offset)
 
     h_angles = np.linspace(0, 180, num=params["hidden_dim1"])
-    W2_0 = generate_tuned_weights(params["hidden_dim1"],
-                                  hidden_dim=params["hidden_dim2"],
-                                  angles=h_angles,
-                                  tuning_width=params["un_tuned_neurons_width"],
-                                  offset=offset)
+    W2_0, _, _ = generate_tuned_weights(params["hidden_dim1"],
+                                        hidden_dim=params["hidden_dim2"],
+                                        angles=h_angles,
+                                        tuning_width=params["un_tuned_neurons_width"],
+                                        offset=offset)
     W3_0 = np.zeros((int(data.output_size), int(params["hidden_dim2"])))
     params["W1_0"] = W1_0.copy()
     params["W2_0"] = W2_0.copy()
