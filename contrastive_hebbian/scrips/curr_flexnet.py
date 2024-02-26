@@ -10,10 +10,10 @@ from vpl_model.tasks import AngleDiscriminationTask
 from vpl_model.neural_data import DataHandler
 
 
-hebbian_eta = 5e-6
-sgd_lr = 1e-4
-feedback_alignment_lr = 1e-4
-predictive_coding_lr = 0.3
+hebbian_eta = 1e-6
+sgd_lr = 2e-4
+feedback_alignment_lr = 2e-4
+predictive_coding_lr = 0.4
 FWHM = 35.0
 
 params = {"training_orientation": 90.0,
