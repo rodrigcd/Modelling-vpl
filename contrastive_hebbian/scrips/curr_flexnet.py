@@ -10,10 +10,10 @@ from vpl_model.tasks import AngleDiscriminationTask
 from vpl_model.neural_data import DataHandler
 
 
-hebbian_eta = 1e-6
+hebbian_eta = 1e-5
 sgd_lr = 2e-4
 feedback_alignment_lr = 2e-4
-predictive_coding_lr = 0.4
+predictive_coding_lr = 0.2
 FWHM = 35.0
 
 params = {"training_orientation": 90.0,
@@ -107,6 +107,7 @@ def main(model_id, seed=0):
 
     params["sampled_ori"] = sampled_ori
     params["sampled_bandwidths"] = sampled_bandwidths
+    params["all_regimes"] = all_regimes
 
     W_list = [W1_0, W2_0, W3_0]
     W_feedback_list = [np.random.normal(size=W.shape) for W in W_list]

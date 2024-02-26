@@ -33,7 +33,8 @@ def apply_func_to_all_files(save_path, all_model_ids, n_runs, func):
 def main():
     plot_config()
     # Load the data
-    data_path = "../all_results/random_neural_init/"
+    #data_path = "../all_results/random_neural_init/"
+    data_path = "../all_results/neural_data_net_slurm/"
     all_files = glob.glob(data_path + "*.pkl")
     n_runs = 5
     exclude_list = ["gradient_descent_hebbian", "feedback_alignment_hebbian",
