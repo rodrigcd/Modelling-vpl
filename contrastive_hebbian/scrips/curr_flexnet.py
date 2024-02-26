@@ -10,7 +10,7 @@ from vpl_model.tasks import AngleDiscriminationTask
 from vpl_model.neural_data import DataHandler
 
 
-hebbian_eta = 0.005
+hebbian_eta = 0.001
 sgd_lr = 0.01
 feedback_alignment_lr = 0.01
 predictive_coding_lr = 0.2
@@ -104,6 +104,10 @@ def main(model_id, seed=0):
     params["W1_0"] = W1_0.copy()
     params["W2_0"] = W2_0.copy()
     params["W3_0"] = W3_0.copy()
+
+    params["sampled_ori"] = sampled_ori
+    params["sampled_bandwidths"] = sampled_bandwidths
+
     W_list = [W1_0, W2_0, W3_0]
     W_feedback_list = [np.random.normal(size=W.shape) for W in W_list]
 
@@ -136,6 +140,9 @@ def main(model_id, seed=0):
 
     curr_index = 0
     curr_inner_iters = 0
+    switch_W1_list.append(W1_0)
+    switch_W2_list.append(W2_0)
+    switch_W3_list.append(W3_0)
     for i in tqdm(range(params["train_iters"])):
 
         if i % params["save_every"] == 0:

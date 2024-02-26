@@ -90,6 +90,8 @@ class DataHandler(object):
         sorted_ori = orientations[sorted_ori_index]
         sorted_bandwidths = bandwidths[sorted_ori_index]
         skip_index = np.arange(0, available_cells, available_cells//hidden_dim)
+        random_shift = np.random.randint(0, available_cells)
+        skip_index = (skip_index + random_shift) % available_cells
         sampled_ori = sorted_ori[skip_index]
         sampled_bandwidths = sorted_bandwidths[skip_index]
         #np.random.shuffle(sampled_bandwidths)
