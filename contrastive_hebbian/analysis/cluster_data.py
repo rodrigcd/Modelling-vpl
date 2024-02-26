@@ -13,6 +13,7 @@ def get_loss(data, model_id):
     loss = data[model_id]["loss"]
     return loss
 
+
 def get_accuracy(data, model_id):
     accuracy = data[model_id]["accuracy"]
     return accuracy
@@ -33,6 +34,8 @@ def main():
     data_path = "../all_results/neural_data_net_slurm/"
     all_files = glob.glob(data_path + "*.pkl")
     n_runs = 5
+    exclude_list = ["gradient_descent_hebbian", "feedback_alignment_hebbian",
+                    "predictive_coding_hebbian"]
 
     all_model_ids = list(all_regimes.keys())
 
@@ -42,10 +45,16 @@ def main():
     for i, model_id in enumerate(all_model_ids):
         for run in range(n_runs):
             file_name = data_path + model_id + "_run_" + str(run) + ".pkl"
-            data = pd.read_pickle(file_name)
+            try:
+                data = pd.read_pickle(file_name)
+            except:
+                print("file not found", file_name)
+                continue
             loss = get_loss(data, model_id)
             ax[i].plot(loss, label="run_" + str(run))
         ax[i].set_title(model_id)
+    ax[0].legend()
+    plt.tight_layout()
     plt.show()
 
     # TODO:
