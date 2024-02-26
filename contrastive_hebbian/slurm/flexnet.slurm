@@ -22,4 +22,4 @@ conda activate metamod
 nvidia-smi
 python -c "import torch;print(torch.cuda.is_available())"
 
-python flexnet_slurm.py --run-id $SLURM_ARRAY_TASK_ID --exp-name "neural_data_net_slurm"
+python flexnet_slurm.py --run-id $SLURM_ARRAY_TASK_ID --exp-name "neural_data_net_slurm" --save-path "../all_results/random_neural_init/"
