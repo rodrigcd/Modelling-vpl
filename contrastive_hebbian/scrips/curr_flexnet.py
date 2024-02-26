@@ -10,9 +10,9 @@ from vpl_model.tasks import AngleDiscriminationTask
 from vpl_model.neural_data import DataHandler
 
 
-hebbian_eta = 0.0005
-sgd_lr = 0.005
-feedback_alignment_lr = 0.005
+hebbian_eta = 0.0001
+sgd_lr = 0.001
+feedback_alignment_lr = 0.001
 predictive_coding_lr = 0.2
 FWHM = 35.0
 

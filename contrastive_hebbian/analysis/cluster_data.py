@@ -11,7 +11,8 @@ from vpl_model.utils import plot_config
 
 def get_loss(data, model_id):
     loss = data[model_id]["loss"]
-    return loss
+    switch_times = data[model_id]["curriculum_switch"]
+    return loss, switch_times
 
 
 def get_accuracy(data, model_id):
@@ -31,7 +32,7 @@ def apply_func_to_all_files(save_path, all_model_ids, n_runs, func):
 def main():
     plot_config()
     # Load the data
-    data_path = "../all_results/neural_data_net_slurm/"
+    data_path = "../all_results/random_neural_init/"
     all_files = glob.glob(data_path + "*.pkl")
     n_runs = 5
     exclude_list = ["gradient_descent_hebbian", "feedback_alignment_hebbian",
@@ -50,8 +51,10 @@ def main():
             except:
                 print("file not found", file_name)
                 continue
-            loss = get_loss(data, model_id)
-            ax[i].plot(loss, label="run_" + str(run))
+            loss, switches = get_loss(data, model_id)
+            ax[i].plot(loss, label="run_" + str(run), color = "C" + str(run))
+            for switch in switches:
+                ax[i].axvline(switch, color="C" + str(run), linestyle="--")
         ax[i].set_title(model_id)
     ax[0].legend()
     plt.tight_layout()
