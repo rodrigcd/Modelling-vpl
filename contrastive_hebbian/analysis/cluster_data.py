@@ -17,7 +17,8 @@ def get_loss(data, model_id):
 
 def get_accuracy(data, model_id):
     accuracy = data[model_id]["accuracy"]
-    return accuracy
+    switch_times = data[model_id]["curriculum_switch"]
+    return accuracy, switch_times
 
 
 def apply_func_to_all_files(save_path, all_model_ids, n_runs, func):
@@ -53,6 +54,26 @@ def main():
                 continue
             loss, switches = get_loss(data, model_id)
             ax[i].plot(loss, label="run_" + str(run), color = "C" + str(run))
+            for switch in switches:
+                ax[i].axvline(switch, color="C" + str(run), linestyle="--")
+        ax[i].set_title(model_id)
+    ax[0].legend()
+    plt.tight_layout()
+    plt.show()
+
+    # Plot accuracy
+    f, ax = plt.subplots(3, 3, figsize=(10, 10))
+    ax = ax.flatten()
+    for i, model_id in enumerate(all_model_ids):
+        for run in range(n_runs):
+            file_name = data_path + model_id + "_run_" + str(run) + ".pkl"
+            try:
+                data = pd.read_pickle(file_name)
+            except:
+                print("file not found", file_name)
+                continue
+            accuracy, switches = get_accuracy(data, model_id)
+            ax[i].plot(accuracy, label="run_" + str(run), color = "C" + str(run))
             for switch in switches:
                 ax[i].axvline(switch, color="C" + str(run), linestyle="--")
         ax[i].set_title(model_id)
