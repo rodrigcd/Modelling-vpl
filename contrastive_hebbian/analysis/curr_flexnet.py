@@ -61,12 +61,6 @@ def get_tuning_curves(data, pre_switch=True, use_pre_activity=False):
             W1 = data[key]["switch_W1"]
             W2 = data[key]["switch_W2"]
             W3 = data[key]["switch_W3"]
-            W1_0 = data[key]["learned_W1"][0, ...]
-            W2_0 = data[key]["learned_W2"][0, ...]
-            W3_0 = data[key]["learned_W3"][0, ...]
-            W1 = np.concatenate([W1_0[np.newaxis, ...], W1], axis=0)
-            W2 = np.concatenate([W2_0[np.newaxis, ...], W2], axis=0)
-            W3 = np.concatenate([W3_0[np.newaxis, ...], W3], axis=0)
         else:
             W1 = data[key]["learned_W1"]
             W2 = data[key]["learned_W2"]
