@@ -57,7 +57,7 @@ def probe_tuning_curve(W_list, probing_angles, forward_path_func):
 
 def plot_config():
     # Configure figure
-#     matplotlib.rc('font', **{'family': 'Helvetica'})
+    # matplotlib.rc('font', **{'family': 'Helvetica'})
     SMALL_SIZE = 18
     MEDIUM_SIZE = 18
     BIGGER_SIZE = 18
