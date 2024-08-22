@@ -25,8 +25,8 @@ class ContrastiveNet(object):
     def update(self, x, y, y_hat, h_ff):
         batch_dW1 = vmap(d_W1, in_axes=(None, None, 0, 0, 0, 0, None, None, None))(self.W1, self.W2, x, y, h_ff, y_hat, self.gamma, self.eta, self.learning_rate)
         batch_dW2 = vmap(d_W2, in_axes=(None, None, 0, 0, 0, None, None, None))(self.W1, self.W2, x, y, y_hat, self.gamma, self.eta, self.learning_rate)
-        grad_W1 = jnp.mean(batch_dW1, axis=0)
-        grad_W2 = jnp.mean(batch_dW2, axis=0)
+        grad_W1 = jnp.sum(batch_dW1, axis=0)
+        grad_W2 = jnp.sum(batch_dW2, axis=0)
         self.W1 += grad_W1
         self.W2 += grad_W2*self.lr_W2_W1
         return jnp.mean(jnp.abs(grad_W1)), jnp.mean(jnp.abs(grad_W2))

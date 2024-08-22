@@ -1,6 +1,9 @@
 import jax
+from jax import jit
+from functools import partial
 
 
+@partial(jit, static_argnums=(2,))
 def sigmoid_output_forward_path(W_list, x, n_layers):
     h_list = []
     z_list = []
@@ -16,6 +19,7 @@ def sigmoid_output_forward_path(W_list, x, n_layers):
     return h_list, z_list
 
 
+@partial(jit, static_argnums=(2,))
 def forward_path(W_list, x, n_layers):
     h_list = []
     z_list = []

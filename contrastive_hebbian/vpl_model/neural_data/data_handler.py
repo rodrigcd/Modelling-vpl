@@ -1,25 +1,82 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from vpl_model.utils import periodic_kernel
+from vpl_model.utils import periodic_kernel, lowess
+from vismap import config # settings such as OTC_S2N_min and BW_min are in here
+from vismap.datatools import data_loader
 
 
 class DataHandler(object):
 
     def __init__(self, data_path):
         self.data_path = data_path
-        self.df = pd.read_pickle(data_path)
+        #self.df = pd.read_pickle(data_path)
+        allCells, _ = data_loader(len_scale='2_10', filter_low_bw=True, filter_S2N=True,
+                                  filter_TL_only=True, loc="local")
+        self.df = allCells.allCells
         self.main_areas = ["V1", "LM", "LI"]
         self.main_training_steps = ["naive", 45, 35, 30, 25, 20]
+        self.get_ypred_indexes()
+        self.get_all_tuning_curves()
+
+    def get_ypred_indexes(self):
+        all_ypred_index = []
+        x_val = []
+        for i, col in enumerate(self.df.columns):
+            if "ypred" in col:
+                all_ypred_index.append(i)
+                x_val.append(float(col.split("_")[-1]))
+        x_val = np.array(x_val)
+        sorted_index = np.argsort(x_val)
+        self.x_val = x_val[sorted_index]
+        self.ypred_index = np.array(all_ypred_index)[sorted_index]
+
+    def get_all_tuning_curves(self):
+        tuning_curves = {}
+        for main_area in self.main_areas:
+            tc_list = []
+            for main_training_step in self.main_training_steps:
+                df = self.general_filters(self.df)
+                df = df[(df.training_lvl == main_training_step) & (df.area_ID_str == main_area)]
+                df = df.iloc[:, self.ypred_index]
+                tc_list.append(df.values)
+            tuning_curves[main_area] = np.array(tc_list, dtype = object)
+        self.tuning_curves = tuning_curves
+
+    def plot_slope_diff(self, ax, area, colormap, normalize_tuning=True, TO=90.0):
+        activity = self.tuning_curves[area]
+        colors = colormap(np.linspace(0, 1, len(self.main_training_steps) + 1))
+        for t in range(len(self.main_training_steps)):
+            act_t = activity[t]
+            angles = np.linspace(0, 180, len(act_t[-1]))
+            PO_index = np.argmax(act_t, axis=1)
+            PO = angles[PO_index]
+            if normalize_tuning:
+                act_t = act_t/np.mean(act_t)
+            slopes = np.diff(np.concatenate([act_t, act_t[:, 1][:, np.newaxis]], axis=1), axis=1)
+            x_axis = PO - TO
+            TO_index = np.argmin(np.abs(angles - TO))
+            y_axis = slopes[:, TO_index]
+            sort_index = np.argsort(x_axis)
+            x_axis = x_axis[sort_index]
+            y_axis = y_axis[sort_index]
+            if t == 0:
+                base_y = y_axis
+                base_x = x_axis
+            inter_y_base, _ = lowess(x_axis, np.interp(x_axis, base_x, base_y))
+            smooth_y, _ = lowess(x_axis, y_axis)
+            ax.plot(x_axis, smooth_y-inter_y_base, color=colors[t])
+        return ax
+
 
     @staticmethod
     def general_filters(df, by_RF_max=False):
-        df = df[df.OTC_S2N >= 1]
-        df = df[df.RF_overlap == True]
-        if by_RF_max:
-            df = df[df.RF_max >= .5]
-        else:
-            df = df[df.RF_S2N >= 2.0]
+        # df = df[df.OTC_S2N >= 1]
+        # df = df[df.RF_overlap == True]
+        # if by_RF_max:
+        #     df = df[df.RF_max >= .5]
+        # else:
+        #     df = df[df.RF_S2N >= 2.0]
         return df
 
     def get_bandwidth_traininglvl_area(self, make_plot=False):
@@ -81,8 +138,8 @@ class DataHandler(object):
         return orientations
 
     def angle_bandwidth_generated_weights(self, input_dim, hidden_dim, angles):
-        orientations = self.get_orientation_traininglvl_area()
-        bandwidths = self.get_bandwidth_traininglvl_area()
+        orientations = self.get_orientation_traininglvl_area(make_plot=False)
+        bandwidths = self.get_bandwidth_traininglvl_area(make_plot=False)
         orientations = orientations[("naive", "V1")]
         bandwidths = bandwidths[("naive", "V1")]
         available_cells = len(orientations)
@@ -104,7 +161,7 @@ class DataHandler(object):
 
 
 if __name__ == "__main__":
-    data_path = "../../../../tmp_data/20240225031102_orituneData.pkl"
+    data_path = "/home/rodrigo/SSD/Projects/tmp_data/20240816203149_orituneData.pkl"
     data_handler = DataHandler(data_path)
 
     input_dim = 180

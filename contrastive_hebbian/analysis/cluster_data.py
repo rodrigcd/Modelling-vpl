@@ -2,10 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 import pandas as pd
-import pickle as pkl
 import os, sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from scrips.curr_flexnet import all_regimes
+from scrips.pre_cosyne_code.curr_flexnet import all_regimes
 from vpl_model.utils import plot_config
 from curr_flexnet import get_tuning_curves, get_angle_bandwidth_through_time
 

@@ -111,7 +111,7 @@ def main(seed=0):
 
 if __name__ == "__main__":
     n_runs = 5
-    save_path = "../all_results/correct_curriculum/"
+    save_path = "../../all_results/correct_curriculum/"
     check_dir(save_path)
     for i in range(n_runs):
         print("seed", i)

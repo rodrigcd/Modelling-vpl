@@ -6,7 +6,7 @@ from vpl_model.tasks import BaseTask
 class AngleDiscriminationTask(BaseTask):
 
     def __init__(self, training_orientation=90.0, orientation_diff=45, input_size=30,
-                 signal_amp=1.0, signal_bandwidth=20, output_amp=1.0, single_output=False):
+                 signal_amp=1.0, signal_bandwidth=20, output_amp=1.0, task_mode="classification"):
 
         self.training_orientation = training_orientation
         self.orientation_diff = orientation_diff
@@ -14,8 +14,7 @@ class AngleDiscriminationTask(BaseTask):
         self.signal_amp = signal_amp
         self.signal_bandwidth = signal_bandwidth
         self.output_amp = output_amp
-        self.output_size = 1
-        self.single_output = single_output
+        self.task_mode = task_mode
         self._generate_input()
 
     def _generate_input(self):
@@ -24,13 +23,21 @@ class AngleDiscriminationTask(BaseTask):
         self.neg_orientation = self.training_orientation - self.orientation_diff/2
         self.pos_gaussian = gaussian_func(self.angles, self.pos_orientation, self.signal_bandwidth)
         self.neg_gaussian = gaussian_func(self.angles, self.neg_orientation, self.signal_bandwidth)
+        if self.task_mode == "classification":
+            self.output_size = 1
+        elif self.task_mode == "regression":
+            self.output_size = 2
+        else:
+            raise ValueError("Invalid mode")
 
     def full_batch(self):
-        if self.single_output:
+        if self.task_mode == "classification":
             y = np.array([0.0, 1.0])[..., np.newaxis, np.newaxis]
-        else:
+        elif self.task_mode == "regression":
             y = np.array([self.output_amp, -self.output_amp])[..., np.newaxis, np.newaxis]
-        x = np.stack([self.pos_gaussian, self.neg_gaussian], axis=0)[..., np.newaxis]
+        else:
+            raise ValueError("Invalid mode")
+        x = np.stack([self.pos_gaussian, self.neg_gaussian], axis=0)[..., np.newaxis] * self.signal_amp
         return x, y
 
 

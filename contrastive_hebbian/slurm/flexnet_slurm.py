@@ -1,7 +1,8 @@
 import os, sys
 # add the path to the directory containing the flexnet module to the system path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from scrips.curr_flexnet import main, all_regimes
+#from scrips.pre_cosyne_code.curr_flexnet import main, all_regimes
+from scrips.flexible_net.mse_single_angle import main, all_regimes
 import argparse
 import pickle
 from vpl_model.utils import check_dir
@@ -13,10 +14,10 @@ if __name__ == "__main__":
         '--run-id', type=int, default=0
     )
     parser.add_argument(
-        '--save-path', type=str, default="../all_results/neural_data_net_slurm/"
+        '--save-path', type=str, default="../all_results/mse_flexnet/"
     )
     parser.add_argument(
-        '--exp-name', type=str, default="flexnet"
+        '--exp-name', type=str, default="mse_flexnet"
     )
 
     args = parser.parse_args()

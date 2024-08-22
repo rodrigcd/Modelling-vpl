@@ -4,9 +4,8 @@ from jax import jit
 
 @jit
 def hebbian_update(W, h, h_1, eta):
-    eta_sign = (-1 * jnp.sign(-eta) + 1) / 2#jax.nn.sigmoid(-eta*10) + 1) / 2
-    # Last term is for the regularization, not in the original paper
-    eta_pos = eta * h * (h_1.T - h * W) - 2 * eta * W
+    eta_sign = (-1 * jnp.sign(-eta) + 1) / 2
+    eta_pos = eta * h * (h_1.T - h * W)
     eta_neg = eta * h * h_1.T / (1 + jnp.expand_dims(jnp.sum(W**2, axis=1), axis=-1))
     update = eta_sign * eta_pos + (1 - eta_sign) * eta_neg
     return update

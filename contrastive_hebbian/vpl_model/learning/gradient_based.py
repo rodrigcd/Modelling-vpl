@@ -1,25 +1,30 @@
 import jax.numpy as jnp
-from jax import grad, vmap
+from jax import grad, vmap, jit
+from functools import partial
 from vpl_model.networks import forward_path, sigmoid_output_forward_path
 import numpy as np
 
 
+@partial(jit, static_argnums=(3,))
 def mse_loss(x, y, W_list, n_layers):
     h, z = forward_path(W_list, x, n_layers)
     y_hat = h[-1]
     return jnp.mean((y_hat - y)**2)/2
 
 
+@partial(jit, static_argnums=(3,))
 def cross_entropy_loss(x, y, W_list, n_layers):
     h, z = sigmoid_output_forward_path(W_list, x, n_layers)
     y_hat = h[-1]
     return -jnp.mean(y * jnp.log(y_hat) + (1 - y) * jnp.log(1 - y_hat))
 
 
+@partial(jit, static_argnums=(3,))
 def grad_cross_entropy(x, y, W_list, n_layers):
     return grad(cross_entropy_loss, argnums=2)(x, y, W_list, n_layers)
 
 
+@partial(jit, static_argnums=(3,))
 def grad_mse(x, y, W_list, n_layers):
     return grad(mse_loss, argnums=2)(x, y, W_list, n_layers)
 

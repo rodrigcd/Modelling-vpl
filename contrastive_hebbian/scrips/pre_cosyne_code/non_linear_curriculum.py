@@ -109,7 +109,7 @@ def main(seed=0):
 
 if __name__ == "__main__":
     n_runs = 3
-    save_path = "../all_results/non_linear_tanh_50000/"
+    save_path = "../../all_results/non_linear_tanh_50000/"
     check_dir(save_path)
     for i in range(n_runs):
         print("seed", i)

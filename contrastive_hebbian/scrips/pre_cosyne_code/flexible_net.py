@@ -144,7 +144,7 @@ def main(seed=0):
 
 if __name__ == "__main__":
     n_runs = 3
-    save_path = "../all_results/flexnet_tuned_lr/"
+    save_path = "../../all_results/flexnet_tuned_lr/"
     check_dir(save_path)
     for i in range(n_runs):
         print("seed", i)
